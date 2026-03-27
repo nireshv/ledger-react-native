@@ -1,50 +1,116 @@
-# Welcome to your Expo app 👋
+# Ledger
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A personal finance management mobile app built with React Native and Expo. Track income, expenses, and transfers across multiple accounts with multi-currency support, visual analytics, and local backup.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **Multi-account management** — track balances across accounts with custom colors and currencies
+- **Transaction tracking** — log income, expenses, and cross-currency transfers with exchange rates
+- **Categories** — organize spending with color-coded categories; 12 default categories seeded on first run
+- **Dashboard analytics** — income vs expense charts, top category breakdowns, configurable date ranges
+- **Reports** — financial summaries grouped by currency and duration
+- **Backup & restore** — export and import local SQLite backup files
+- **Biometric auth** — Face ID / fingerprint support via expo-local-authentication
 
-   ```bash
-   npm install
-   ```
+## Tech Stack
 
-2. Start the app
+| Layer | Library |
+|-------|---------|
+| Framework | React Native 0.81 + Expo ~54 |
+| Navigation | Expo Router 6 (file-based) + React Navigation bottom tabs |
+| State | Zustand 5 with custom MVI pattern |
+| Database | expo-sqlite 16 (SQLite with WAL mode) |
+| Validation | Zod 4 |
+| Charts | react-native-gifted-charts |
+| Dates | date-fns 4 |
+| Security | expo-local-authentication + expo-secure-store |
+| Language | TypeScript 5 (strict) |
 
-   ```bash
-   npx expo start
-   ```
+## Architecture
 
-In the output, you'll find options to open the app in a
+Clean Architecture with MVI (Model-View-Intent), mirroring the original Android implementation.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+Screens (Expo Router)
+  └── Zustand Stores (Intent → State → Effect)
+        └── Use Cases (domain / business logic)
+              └── Repository Implementations
+                    └── DAOs + SQLite (expo-sqlite)
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+**Dependency injection** is handled by a manual `ServiceLocator` singleton (`src/di/providers/ServiceLocator.ts`), initialized in `app/_layout.tsx` after the database is ready. It wires all DAOs → Repositories → Use Cases at startup.
 
-## Learn more
+**MVI contracts** live in `src/core/mvi/EventContract.ts`:
+- `ViewState` — base interface for screen state (isLoading, error)
+- `Intent` — discriminated union of user actions dispatched to stores
+- `Effect` — one-shot side effects (navigation, toasts)
+- `UseCaseResult<T>` — explicit success/error wrapper (no throwing)
 
-To learn more about developing your project with Expo, look at the following resources:
+## Project Structure
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```
+app/                    # Expo Router screens
+  _layout.tsx           # Root layout — DB init + DI setup
+  (auth)/sign-in.tsx
+  (tabs)/               # 6-tab main navigation
+    index.tsx           # Dashboard
+    transactions.tsx
+    accounts.tsx
+    categories.tsx
+    reports.tsx
+    settings.tsx
+  accounts/upsert.tsx
+  categories/upsert.tsx
+  transactions/upsert.tsx
 
-## Join the community
+src/
+  core/
+    db/                 # SQLite schema, migrations, seeding
+    mvi/                # MVI interfaces
+    theme/              # Colors, typography, spacing tokens
+    utils/              # Date, currency, color, math, logging helpers
+    components/         # Shared UI (AmountText, Button, Card, ColorPicker, …)
+  di/providers/         # ServiceLocator (DI container)
+  features/
+    account/            # Accounts feature
+    transaction/        # Transactions feature
+    category/           # Categories feature
+    dashboard/          # Dashboard analytics
+    report/             # Financial reports
+    settings/           # Backup, auth settings
+```
 
-Join our community of developers creating universal apps.
+Each feature follows the same module structure:
+`components/` · `screens/` · `services/` (DAO, Entity, Mapper, Repository, Use Cases) · `store/` · `types/`
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Database Schema
+
+SQLite database: `ledger_database.db` (WAL mode, foreign keys enabled)
+
+**accounts** — id, name, currency, balance, color_hex, is_included_in_total, created_at
+
+**categories** — id, name, color_hex, icon_name, created_at
+
+**transactions** — id, type (`DEBIT`|`CREDIT`|`TRANSFER`), amount, currency, exchange_rate, account_id, to_account_id, category_id, note, date, is_included, created_at, updated_at
+
+Indexes on `transactions`: date, account_id, category_id, type.
+
+## Path Aliases
+
+Configured in `tsconfig.json` and `babel.config.js`:
+
+| Alias | Resolves to |
+|-------|------------|
+| `@/*` | `./` |
+| `@features/*` | `./src/features/*` |
+| `@core/*` | `./src/core/*` |
+| `@di/*` | `./src/di/*` |
+
+## Get Started
+
+```bash
+npm install
+npx expo start
+```
+
+Run on a simulator/device via Expo Go, or create a [development build](https://docs.expo.dev/develop/development-builds/introduction/) for full native module support (SQLite, biometrics, document picker).
