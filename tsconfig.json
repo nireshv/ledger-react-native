@@ -3,9 +3,10 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"],
+      "@features/*": ["./src/features/*"],
+      "@core/*": ["./src/core/*"],
+      "@di/*": ["./src/di/*"]
     }
   },
   "include": [

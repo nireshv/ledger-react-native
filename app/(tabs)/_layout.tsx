@@ -1,35 +1,86 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
+import { Colors } from '@core/theme';
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
+/**
+ * Bottom tab navigator — equivalent to Android's BottomNavigationView.
+ * Preloads account and category stores so transaction upsert has data ready.
+ */
+export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
+        tabBarActiveTintColor: Colors.primary,
+        tabBarInactiveTintColor: Colors.text.tertiary,
+        tabBarStyle: {
+          backgroundColor: Colors.surface,
+          borderTopColor: Colors.border,
+          borderTopWidth: 1,
+        },
+        headerStyle: { backgroundColor: Colors.surface },
+        headerTintColor: Colors.text.primary,
+        headerShadowVisible: false,
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'Dashboard',
+          tabBarLabel: 'Dashboard',
+          tabBarIcon: ({ color }) => <TabIcon label="📊" color={color} />,
+          headerTitle: 'Dashboard',
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="transactions"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Transactions',
+          tabBarLabel: 'Transactions',
+          tabBarIcon: ({ color }) => <TabIcon label="💳" color={color} />,
+          headerTitle: 'Transactions',
+        }}
+      />
+      <Tabs.Screen
+        name="accounts"
+        options={{
+          title: 'Accounts',
+          tabBarLabel: 'Accounts',
+          tabBarIcon: ({ color }) => <TabIcon label="🏦" color={color} />,
+          headerTitle: 'Accounts',
+        }}
+      />
+      <Tabs.Screen
+        name="categories"
+        options={{
+          title: 'Categories',
+          tabBarLabel: 'Categories',
+          tabBarIcon: ({ color }) => <TabIcon label="🏷️" color={color} />,
+          headerTitle: 'Categories',
+        }}
+      />
+      <Tabs.Screen
+        name="reports"
+        options={{
+          title: 'Reports',
+          tabBarLabel: 'Reports',
+          tabBarIcon: ({ color }) => <TabIcon label="📈" color={color} />,
+          headerTitle: 'Reports',
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarLabel: 'Settings',
+          tabBarIcon: ({ color }) => <TabIcon label="⚙️" color={color} />,
+          headerTitle: 'Settings',
         }}
       />
     </Tabs>
   );
+}
+
+import { Text } from 'react-native';
+
+function TabIcon({ label, color }: { label: string; color: string }) {
+  return <Text style={{ fontSize: 20, opacity: color === Colors.primary ? 1 : 0.6 }}>{label}</Text>;
 }
